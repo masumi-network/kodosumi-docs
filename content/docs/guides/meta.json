@@ -1,0 +1,28 @@
+{
+  "title": "Guides",
+  "pages": [
+    "---Overview---",
+    "index",
+    "what-is-kodosumi",
+    "why",
+    "concepts",
+    "---Getting Started---",
+    "installation",
+    "develop",
+    "config",
+    "forms",
+    "lifecycle",
+    "---Deploy on Kodosumi---",
+    "deploy",
+    "panel",
+    "dashboard",
+    "---Details---",
+    "timeline",
+    "files",
+    "files-api",
+    "locks",
+    "make",
+    "meta",
+    "upload-example"
+  ]
+}

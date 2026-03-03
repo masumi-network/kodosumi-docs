@@ -1,0 +1,44 @@
+{
+  "name": "kodosumi-docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "fumadocs-mdx && node scripts/generate-openapi.mjs && next build",
+    "dev": "next dev",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx",
+    "generate-llms-txt": "tsx scripts/generate-llms-txt.ts"
+  },
+  "dependencies": {
+    "@theguild/remark-mermaid": "^0.3.0",
+    "fumadocs-core": "^16.5.4",
+    "fumadocs-mdx": "^14.2.7",
+    "fumadocs-openapi": "^10.3.4",
+    "fumadocs-ui": "^16.5.4",
+    "lru-cache": "^11.1.0",
+    "lucide-react": "^0.525.0",
+    "mermaid": "^11.8.1",
+    "next": "16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.0",
+    "remark-stringify": "^11.0.0",
+    "strip-markdown": "^6.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.10",
+    "vite": "^6.0.0",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "25.2.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "postcss": "^8.5.5",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.1.10",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+}
