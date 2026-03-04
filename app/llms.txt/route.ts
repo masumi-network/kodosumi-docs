@@ -1,41 +1,42 @@
 import { NextResponse } from 'next/server';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { source } from '@/lib/source';
-import { getLLMText } from '@/lib/get-llm-text';
+import { getMarkdownContent } from '@/lib/get-markdown';
 
-// In-memory cache for the generated content (persists across requests)
-let cachedContent: string | null = null;
-let cacheTimestamp: number = 0;
-const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+const BASE_URL =
+  process.env.NEXT_PUBLIC_DOCS_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://docs.kodosumi.io');
 
-// CORS headers for LLM/cross-origin access (matches md-index and mdx routes)
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+let cachedContent: string | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours
+
 async function generateLLMsTxtContent(): Promise<string> {
   const pages = source.getPages();
+  const baseUrl = BASE_URL.startsWith('http') ? BASE_URL : `https://${BASE_URL}`;
   const MAX_CONCURRENT = 10;
-  
+
   const scanned: string[] = [];
   for (let i = 0; i < pages.length; i += MAX_CONCURRENT) {
     const batch = pages.slice(i, i + MAX_CONCURRENT);
-    const batchResults = await Promise.all(batch.map(getLLMText));
+    const batchResults = await Promise.all(batch.map(getMarkdownContent));
     scanned.push(...batchResults);
   }
-  
+
   return [
-    '# Masumi Network Documentation - Complete Version',
+    '# Kodosumi Documentation - Complete Version',
     '',
-    'This file contains the complete Masumi Network documentation for LLM consumption.',
+    'This file contains the complete Kodosumi documentation for LLM consumption.',
     `Generated on: ${new Date().toISOString()}`,
-    'Website: https://docs.kodosumi.io',
+    'Website: ' + baseUrl,
     '',
-    '## About Masumi Network',
-    'Masumi Network enables Agent-to-Agent Payments and unlocks the Agentic Economy through decentralized AI agent interactions.',
+    '## About Kodosumi',
+    'Kodosumi is a runtime for managing and executing agentic services at scale.',
     '',
     '## How to Access Individual Pages as Markdown',
     '',
@@ -43,24 +44,24 @@ async function generateLLMsTxtContent(): Promise<string> {
     '',
     '### URL Pattern:',
     '```',
-    'https://docs.kodosumi.io/<any-path>.md',
+    `${baseUrl}/<any-path>.md`,
     '```',
     '',
     '### Examples:',
-    '- https://docs.kodosumi.io/documentation/get-started/installation.md',
-    '- https://docs.kodosumi.io/api-reference/payment-service/post-registry.md',
-    '- https://docs.kodosumi.io/documentation/how-to-guides/how-to-enable-agent-collaboration.md',
+    `- ${baseUrl}/guides.md`,
+    `- ${baseUrl}/guides/develop.md`,
+    `- ${baseUrl}/api-reference.md`,
     '',
     '### Markdown Index:',
     'For a complete list of all available markdown pages, visit:',
-    '- https://docs.kodosumi.io/md-index',
-    '- https://docs.kodosumi.io/md-index.md',
+    `- ${baseUrl}/md-index`,
+    `- ${baseUrl}/md-index.md`,
     '',
     '### Benefits:',
     '- Clean markdown without HTML/JSX',
     '- CORS-enabled for API access',
-    '- Cached for fast access',
-    '- Bot-friendly (bypasses Cloudflare protection)',
+    '- No authentication required',
+    '- Bot-friendly',
     '',
     '---',
     '',
@@ -71,67 +72,27 @@ async function generateLLMsTxtContent(): Promise<string> {
 }
 
 /**
- * Serves the llms.txt file, generating it on-demand if needed.
+ * Serves llms.txt for LLM discovery (e.g. crawlers, agents).
  * Uses in-memory caching to avoid regenerating on every request.
- * This approach:
- * - Reduces build time (file not generated at build)
- * - Faster deployments (smaller bundle size)
- * - Still fast responses (cached in memory)
- * - CDN-friendly caching headers
  */
 export async function GET() {
   try {
-    // Check in-memory cache first
     const now = Date.now();
-    if (cachedContent && (now - cacheTimestamp) < CACHE_TTL) {
+    if (cachedContent && now - cacheTimestamp < CACHE_TTL) {
       return new NextResponse(cachedContent, {
         status: 200,
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
-          // Cache aggressively: 24 hours browser, 7 days CDN, serve stale for 30 days while revalidating
           'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
           ...CORS_HEADERS,
         },
       });
     }
 
-    // Try to read from disk cache (if it exists from previous generation)
-    // Note: Cache file is stored in .cache/ to avoid Next.js public/ route conflict
-    const filePath = join(process.cwd(), '.cache', 'llms.txt');
-    try {
-      const fileContent = await readFile(filePath, 'utf-8');
-      // Update in-memory cache
-      cachedContent = fileContent;
-      cacheTimestamp = now;
-
-      return new NextResponse(fileContent, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000',
-          ...CORS_HEADERS,
-        },
-      });
-    } catch (fileError) {
-      // File doesn't exist, generate it
-      console.log('📝 Generating llms.txt on-demand...');
-    }
-
-    // Generate content on-demand
     const content = await generateLLMsTxtContent();
-    
-    // Update in-memory cache
     cachedContent = content;
     cacheTimestamp = now;
 
-    // Optionally write to disk for persistence (non-blocking)
-    // Ensure .cache directory exists first
-    mkdir(join(process.cwd(), '.cache'), { recursive: true })
-      .then(() => writeFile(filePath, content, 'utf-8'))
-      .catch((err) => {
-        console.warn('Failed to write llms.txt to disk (non-critical):', err);
-      });
-    
     return new NextResponse(content, {
       status: 200,
       headers: {
@@ -141,7 +102,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('❌ Error generating/serving llms.txt:', error);
+    console.error('Error generating llms.txt:', error);
     return new NextResponse('Error generating llms.txt', {
       status: 500,
       headers: {
@@ -152,7 +113,6 @@ export async function GET() {
   }
 }
 
-// Handle CORS preflight requests (required for cross-origin fetch from browsers)
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,

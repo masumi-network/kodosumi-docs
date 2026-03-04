@@ -2,22 +2,23 @@
 title: 'Documentation Build'
 ---
 
-This guide explains how to build and deploy the Kodosumi documentation using Mintlify.
+This guide explains how to build and deploy the Kodosumi documentation using Fumadocs.
 
 ## Prerequisites
 
 Before building the documentation, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (version 16 or higher)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [Mintlify CLI](https://www.mintlify.com/docs/cli)
+- [Node.js](https://nodejs.org/) (version 18 or higher)
+- [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
 
 ## Installation
 
-Install Mintlify globally:
+Install dependencies from the project root:
 
 ```bash
-npm install -g mintlify
+npm install
+# or
+pnpm install
 ```
 
 ## Local Development
@@ -25,11 +26,9 @@ npm install -g mintlify
 To run the documentation locally for development:
 
 ```bash
-# Navigate to the docs directory
-cd docs
-
-# Start the development server
-mintlify dev
+npm run dev
+# or
+pnpm dev
 ```
 
 The documentation will be available at `http://localhost:3000`.
@@ -39,17 +38,15 @@ The documentation will be available at `http://localhost:3000`.
 To build the documentation for production deployment:
 
 ```bash
-# Navigate to the docs directory
-cd docs
-
-# Build the documentation
-mintlify build
+npm run build
+# or
+pnpm build
 ```
 
-This will generate a production-ready build in the `.mintlify` directory.
+This will run `fumadocs-mdx`, generate OpenAPI docs, and create a production build in the `.next` directory.
 
-### Getting Help
+## Getting Help
 
-- Check the [Mintlify documentation](https://www.mintlify.com/docs)
-- Review the [Mintlify CLI reference](https://www.mintlify.com/docs/cli)
+- Check the [Fumadocs documentation](https://fumadocs.dev)
+- Review the [Fumadocs MDX guide](https://fumadocs.dev/docs/mdx)
 - Report issues to the [Kodosumi GitHub repository](https://github.com/masumi-network/kodosumi)

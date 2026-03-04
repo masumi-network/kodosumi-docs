@@ -1,23 +1,40 @@
 import { source } from '@/lib/source';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-// CORS headers for LLM access
+const BASE_URL =
+  process.env.NEXT_PUBLIC_DOCS_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://docs.kodosumi.io');
+
+// CORS headers for LLM/agent access
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+function isBrowserRequest(request: NextRequest): boolean {
+  const accept = request.headers.get('accept') ?? '';
+  return accept.includes('text/html') && !accept.includes('text/markdown');
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
- * Markdown Index - Main guide for LLMs/bots to discover all available markdown endpoints
+ * Markdown Index - Guide for LLMs/bots to discover all available markdown endpoints.
  * Accessible at: /md-index or /md-index.md
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const pages = source.getPages();
-    const baseUrl = 'https://docs.kodosumi.io';
+    const baseUrl = BASE_URL.startsWith('http') ? BASE_URL : `https://${BASE_URL}`;
 
-    // Group pages by their top-level section
     const pagesBySection = new Map<string, typeof pages>();
     pages.forEach((page) => {
       const section = page.url.split('/')[1] || 'root';
@@ -27,11 +44,10 @@ export async function GET() {
       pagesBySection.get(section)!.push(page);
     });
 
-    // Build the markdown index
     const sections: string[] = [
-      '# Masumi Documentation - Markdown Index',
+      '# Kodosumi Documentation - Markdown Index',
       '',
-      '**Welcome to the Masumi Documentation Markdown Index!**',
+      '**Welcome to the Kodosumi Documentation Markdown Index!**',
       '',
       'This page provides a complete guide to all available documentation pages in markdown format.',
       'Each page can be accessed by appending `.md` to any documentation URL.',
@@ -44,11 +60,11 @@ export async function GET() {
       '```',
       '',
       '**Examples:**',
-      `- HTML: ${baseUrl}/documentation/get-started/installation`,
-      `- Markdown: ${baseUrl}/documentation/get-started/installation.md`,
+      `- HTML: ${baseUrl}/guides`,
+      `- Markdown: ${baseUrl}/guides.md`,
       '',
-      `- HTML: ${baseUrl}/api-reference/payment-service/post-registry`,
-      `- Markdown: ${baseUrl}/api-reference/payment-service/post-registry.md`,
+      `- HTML: ${baseUrl}/guides/develop`,
+      `- Markdown: ${baseUrl}/guides/develop.md`,
       '',
       '## Available Documentation Pages',
       '',
@@ -56,7 +72,6 @@ export async function GET() {
       '',
     ];
 
-    // Add each section
     Array.from(pagesBySection.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([section, sectionPages]) => {
@@ -77,16 +92,10 @@ export async function GET() {
         sections.push('');
       });
 
-    // Add footer information
     sections.push(
       '---',
       '',
       '## Additional Resources',
-      '',
-      '### Complete Documentation in One File',
-      `- **llms.txt**: ${baseUrl}/llms.txt`,
-      '  - Contains all documentation pages combined into a single file',
-      '  - Updated periodically for comprehensive LLM consumption',
       '',
       '### Individual Page Access',
       '- Use the URLs listed above to access individual pages',
@@ -96,30 +105,63 @@ export async function GET() {
       '### API Access',
       '- All markdown endpoints support CORS',
       '- Content-Type: `text/markdown; charset=utf-8`',
-      '- Cache-Control: 1 hour (browser + CDN)',
+      '- No authentication required',
       '',
-      '## About Masumi Network',
+      '## About Kodosumi',
       '',
-      'Masumi Network enables Agent-to-Agent Payments and unlocks the Agentic Economy',
-      'through decentralized AI agent interactions.',
+      'Kodosumi is a runtime for managing and executing agentic services at scale.',
       '',
       '**Official Links:**',
       '- Documentation: https://docs.kodosumi.io',
-      '- GitHub: https://github.com/masumi-network',
-      '- Website: https://kodosumi.io',
+      '- GitHub: https://github.com/masumi-network/kodosumi',
+      '- Masumi Network: https://masumi.network',
       '',
-      `---`,
+      '---',
       '',
       `*Generated on: ${new Date().toISOString()}*`
     );
 
     const content = sections.join('\n');
 
+    // For browser requests: return HTML so content is visible (avoids blank white screen)
+    if (isBrowserRequest(request)) {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Markdown Index - Kodosumi Docs</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1a1a; background: #fff; }
+    pre { background: #f5f5f5; padding: 1rem; overflow-x: auto; border-radius: 6px; white-space: pre-wrap; }
+    a { color: #6F6AF8; }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e5e5e5; background: #1a1a1a; }
+      pre { background: #2a2a2a; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Kodosumi Documentation - Markdown Index</h1>
+  <p><a href="/guides">← Back to docs</a></p>
+  <pre>${escapeHtml(content)}</pre>
+</body>
+</html>`;
+      return new NextResponse(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600, s-maxage=21600, stale-while-revalidate=604800',
+          'X-Robots-Tag': 'all',
+          ...CORS_HEADERS,
+        },
+      });
+    }
+
     return new NextResponse(content, {
       status: 200,
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        // Cache for 1 hour browser, 6 hours CDN, serve stale for 7 days while revalidating
         'Cache-Control': 'public, max-age=3600, s-maxage=21600, stale-while-revalidate=604800',
         'X-Robots-Tag': 'all',
         ...CORS_HEADERS,
@@ -137,7 +179,6 @@ export async function GET() {
   }
 }
 
-// Handle CORS preflight requests
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
@@ -145,7 +186,6 @@ export async function OPTIONS() {
   });
 }
 
-// HEAD request for checking availability (same headers as GET per HTTP spec)
 export async function HEAD() {
   return new NextResponse(null, {
     status: 200,

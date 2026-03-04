@@ -1,4 +1,5 @@
 {
   "title": "koco CLI",
-  "pages": []
+  "root": true,
+  "pages": ["index"]
 }
