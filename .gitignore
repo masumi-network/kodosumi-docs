@@ -32,6 +32,8 @@ yarn-error.log*
 
 # others
 .env*.local
+# personal deployment notes (not for others)
+DEPLOYMENT.md
 .vercel
 next-env.d.ts
 .claude/

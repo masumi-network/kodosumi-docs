@@ -87,13 +87,6 @@ docker run -p 3000:3000 kodosumi-docs
 docker-compose up --build
 ```
 
-### Digital Ocean Deployment
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions on deploying to Digital Ocean using:
-- App Platform (recommended)
-- Droplets with Docker
-- Container Registry + Kubernetes
-
 ## Build
 
 Build for production:
