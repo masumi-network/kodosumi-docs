@@ -31,7 +31,7 @@ Next, install Kodosumi from the [Python package index](https://pypi.org/)
 
 if instead you prefer to install the latest development trunk run
 
-    pip install "kodosumi @ git+https://github.com/masumi-network/kodosumi.git@dev" 
+    pip install "kodosumi @ git+https://github.com/masumi-network/kodosumi.git@dev"
 
 Start your Ray cluster with
 
@@ -76,7 +76,7 @@ Create the first app configuration named `company_news.yaml` with the following 
 name: company_news
 route_prefix: /company_news
 import_path: company_news.query:fast_app
-runtime_env: 
+runtime_env:
   py_modules:
   - https://github.com/plan-net/agentic-workflow-example/archive/45aabddf234cf8beb7118b400e7cb567776e458a.zip
   pip:
@@ -200,7 +200,7 @@ prime = """
 name: prime
 route_prefix: /prime
 import_path: kodosumi_examples.prime.app:fast_app
-runtime_env: 
+runtime_env:
   py_modules:
   - https://github.com/masumi-network/kodosumi-examples/archive/2db907d955de65bed5dde6513f6359aeb18ebff1.zip
 deployments:
