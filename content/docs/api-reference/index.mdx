@@ -226,6 +226,56 @@ After completion the status request contains the final result in the `final` fie
    'username': '35a04fc4-4442-4b24-b109-614b45d52de1'
 
 ```
+### Output formats
+
+The `final` field is a JSON-encoded string. Its content depends on the return type of the agentic service. The outer key identifies the output type. Below are examples showing what the decoded `final` value looks like for each supported output type.
+
+**Link output** — when the service returns a `Link` pointing to an external URL:
+
+```python
+# Decoded value of final field
+{
+    "Link": {
+        "url": "https://example.com/result",
+        "title": "Result Page"
+    }
+}
+```
+
+**Image output** — when the service returns an `Image` resource:
+
+```python
+# Decoded value of final field
+{
+    "Image": {
+        "url": "https://example.com/output.png",
+        "alt": "Generated image"
+    }
+}
+```
+
+**Video output** — when the service returns a `Video` resource:
+
+```python
+# Decoded value of final field
+{
+    "Video": {
+        "url": "https://example.com/output.mp4"
+    }
+}
+```
+
+As a reminder, the `Text` type appears for plain-text results and for serialized error messages (when `status == "error"`):
+
+```python
+# Decoded value of final field (Text or error)
+{
+    "Text": {
+        "body": "Processing completed successfully."
+    }
+}
+```
+
 Since the plain `/status` request might fail due to Ray latencies you should harden the intial request past flow launch with `?extended=true` as in the following example:
 
 ```python
