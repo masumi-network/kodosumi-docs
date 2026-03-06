@@ -273,35 +273,37 @@ def process(file: str, tracer: Tracer):
 Here's a complete example showing how to use the file management API in a typical workflow:
 
 ```python
+from pathlib import Path
+
 async def run(inputs: dict, tracer: Tracer):
     async with await tracer.fs() as fs:
         # List all input files
         input_files = await fs.ls("in")
         print(f"Found {len(input_files)} input files")
-        
+
         # Process each input file
         for file_info in input_files:
             file_path = file_info['path']
-            
+
             # Read the file content
             async with fs.open(file_path) as file_stream:
                 content = await file_stream.read_all()
-                
+
             # Process the content
             processed_content = process_content(content)
-            
+
             # Create output file
-            output_filename = f"processed_{file_info['name']}"
+            output_filename = f"processed_{Path(file_info['path']).name}"
             with open(f"/tmp/{output_filename}", "wb") as f:
                 f.write(processed_content)
-            
+
             # Upload the processed file
             batch_id = await fs.upload(f"/tmp/{output_filename}")
             print(f"Uploaded {output_filename} with batch ID: {batch_id}")
-        
+
         # Clean up temporary files
         for file_info in input_files:
-            if file_info['name'].startswith('temp_'):
+            if Path(file_info['path']).name.startswith('temp_'):
                 await fs.remove(file_info['path'])
 ```
 
