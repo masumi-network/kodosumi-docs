@@ -1,13 +1,8 @@
 name: Build and Deploy to DigitalOcean
 
-# Automatically deploys to:
-# - test-masumi-docs app when on feat/digitalocean-cicd branch
-# - masumi-docs app when on main branch
+# Only runs when triggered manually (workflow_dispatch).
+# Automatic deploy on push is disabled — repo is deployed via Digital Ocean directly.
 on:
-  push:
-    branches:
-      - feat/digitalocean-cicd
-      - main
   workflow_dispatch:
 
 jobs:
