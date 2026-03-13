@@ -1,0 +1,120 @@
+---
+title: Masumi Skills
+description: AI coding assistant skill with a dedicated Kodosumi Runtime reference guide — context-aware help as you build and deploy agentic services
+icon: Wand
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+The **Masumi Skill** is a context-aware guide for AI coding assistants (Claude Code, Cursor, Windsurf, and others) that provides token-efficient documentation for the entire Masumi ecosystem — including a dedicated **Kodosumi Runtime** reference.
+
+Once installed, your AI assistant automatically loads the Kodosumi reference material as you work on deployments, Ray configuration, spooler setup, or agent lifecycle management — without manual doc pasting.
+
+## Installation
+
+<Tabs items={['Via skills.sh', 'Manual']}>
+  <Tab value="Via skills.sh">
+    ```bash
+    npx skills add https://github.com/masumi-network/masumi-skills --skill masumi
+    ```
+  </Tab>
+  <Tab value="Manual">
+    ```bash
+    git clone https://github.com/masumi-network/masumi-skills
+    cd masumi-skills
+    ./install.sh
+    ```
+  </Tab>
+</Tabs>
+
+**Compatible with:** Claude Code, Cursor, Windsurf, Cline, Aider, Codex, and other AI coding assistants that support skills/rules files.
+
+The skill entry point is also available directly at [masumi.network/skill.md](https://www.masumi.network/skill.md).
+
+## Kodosumi Runtime Reference
+
+The skill's **Kodosumi Runtime** guide covers what you need when deploying agents at scale:
+
+- Ray Serve deployment configuration (base YAML + app YAML patterns)
+- Spooler lifecycle, event transport, and execution modes
+- Panel API for managing deployments at runtime
+- Agent registration, input schema, and lifecycle hooks
+- Files API, forms, locks, and timeline internals
+- Environment variable reference (`KODO_*` settings)
+
+When your AI assistant detects you're working on Kodosumi deployment code, it pulls this guide automatically — keeping the rest of the context window free for your code.
+
+## Full Skill Reference Set
+
+Version 2.0 ships with **8 reference guides** covering the complete ecosystem:
+
+<Cards>
+  <Card
+    title="Kodosumi Runtime"
+    description="Scalable Ray-based deployment and lifecycle management"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/kodosumi-runtime.md"
+  />
+  <Card
+    title="Agentic Services (MIP-003)"
+    description="API standard implementation for MIP-003 compliant services"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/agentic-services.md"
+  />
+  <Card
+    title="Masumi Payments"
+    description="Payment flows, wallet management, and decision logging"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/masumi-payments.md"
+  />
+  <Card
+    title="Registry & Identity"
+    description="On-chain agent discovery, DIDs, and verifiable credentials"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/registry-identity.md"
+  />
+  <Card
+    title="Sokosumi Marketplace"
+    description="Agent listing, job management, and MCP integration"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/sokosumi-marketplace.md"
+  />
+  <Card
+    title="Smart Contracts"
+    description="Escrow logic, payment/registry contracts, and security patterns"
+    href="https://github.com/masumi-network/masumi-skills/blob/main/skill/references/smart-contracts.md"
+  />
+</Cards>
+
+<Callout type="info">
+The skill uses **progressive disclosure**: only the guide relevant to your current task is loaded, keeping context window usage low across ~10,000+ lines of technical documentation.
+</Callout>
+
+## How It Works
+
+The skill ships with an entry point (`skill.md`) and a routing guide (`SKILL.md`). As you work, your AI assistant selects the relevant deep-dive:
+
+| What you're building | Reference loaded |
+|---|---|
+| Ray Serve deployment | `kodosumi-runtime.md` |
+| MIP-003 API compliance | `agentic-services.md` |
+| Payment integration | `masumi-payments.md` |
+| Agent registration / identity | `registry-identity.md` |
+| Sokosumi marketplace listing | `sokosumi-marketplace.md` |
+| Smart contract interaction | `smart-contracts.md` |
+
+## Common Workflows
+
+**Deploy a new agent service:**
+```
+Build Agent → Deploy on Kodosumi → Register → List on Sokosumi → Payments via Masumi
+```
+
+**Scale an existing deployment:**
+```
+Configure Ray Serve YAML → Set KODO_* env vars → koco deploy → Monitor via dashboard
+```
+
+## Resources
+
+- **GitHub:** [masumi-network/masumi-skills](https://github.com/masumi-network/masumi-skills)
+- **Entry point:** [masumi.network/skill.md](https://www.masumi.network/skill.md)
+- **Masumi Docs:** [docs.masumi.network](https://docs.masumi.network)
+- **Sokosumi Docs:** [docs.sokosumi.com](https://docs.sokosumi.com)

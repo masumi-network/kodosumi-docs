@@ -24,6 +24,8 @@
     "locks",
     "make",
     "meta",
-    "upload-example"
+    "upload-example",
+    "---Integrations---",
+    "masumi-skills"
   ]
 }
