@@ -1,5 +1,6 @@
 {
   "title": "koco CLI",
+  "icon": "Terminal",
   "root": true,
   "pages": ["index"]
 }

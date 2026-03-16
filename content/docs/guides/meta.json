@@ -1,5 +1,6 @@
 {
   "title": "Guides",
+  "icon": "BookOpen",
   "root": true,
   "pages": [
     "---Overview---",
