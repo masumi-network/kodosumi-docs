@@ -1,5 +1,6 @@
 {
   "title": "Guides",
+  "icon": "BookOpen",
   "root": true,
   "pages": [
     "---Overview---",
@@ -24,6 +25,8 @@
     "locks",
     "make",
     "meta",
-    "upload-example"
+    "upload-example",
+    "---Integrations---",
+    "masumi-skills"
   ]
 }
