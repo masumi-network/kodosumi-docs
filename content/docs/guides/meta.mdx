@@ -3,6 +3,8 @@ title: Meta
 icon: FileJson
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 ## Agentic Service Annotations
 
 The following attributes are defined with an extended openapi specification.
@@ -38,3 +40,32 @@ The following additional meta data is associated with flow execution:
 | username    | `str` | user identifier owning flow execution |
 | base_url    | `str` | endpoint URL                          |
 | entry_point | `str` | entry point                           |
+
+## Masumi Registration Data in Meta
+
+When an agent is registered on the Masumi network, three fields are written into the expose `meta`:
+
+| field            | type  | comment                                           |
+| ---------------- | ----- | ------------------------------------------------- |
+| agentIdentifier  | `str` | on-chain agent identifier used for payment routing |
+| registrationId   | `str` | Masumi registry entry ID                          |
+| agentPricing     | `obj` | pricing configuration from the Masumi registry    |
+
+These fields are set by the Masumi registration flow. **Do not remove or overwrite them manually.**
+
+<Callout type="warn">
+**`POST /expose` overwrites all fields — including Masumi registration data**
+
+`POST /expose` on an existing expose replaces the **entire** `meta` field. If you send an
+empty or partial `meta` (e.g. `meta: []`), the stored `agentIdentifier`, `registrationId`,
+and `agentPricing` values are **permanently lost** — breaking Masumi payment for that agent.
+
+**Until a PATCH endpoint is available ([#40](https://github.com/masumi-network/kodosumi/issues/40),
+[#41](https://github.com/masumi-network/kodosumi/issues/41)):**
+
+1. Always `GET /expose/{name}` first to retrieve the current meta.
+2. Merge your changes into the existing meta object.
+3. Include the full merged meta in your `POST /expose` body.
+
+Never call `POST /expose` with `meta: []` or `meta: null` on a registered agent.
+</Callout>
