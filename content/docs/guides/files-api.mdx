@@ -166,6 +166,21 @@ response = await client.get("/files/flow-id/in")
 ]
 ```
 
+<Callout type="warn">
+**`GET /files/{fid}/in` requires authentication — returns 401 on Sokosumi Mainnet**
+
+This endpoint requires a valid Kodosumi JWT. Jobs submitted via the **Sokosumi Marketplace**
+(Mainnet) do not carry a panel JWT, so this call returns **401 Unauthorized** for all
+Mainnet-submitted jobs regardless of the agent's `upload_files` setting.
+
+**Current behavior:** The runner silently swallows the 401 with a bare `except:` and
+continues with `files = None` — jobs do not crash, but the error is masked.
+
+**Workaround:** If your agent does not use file uploads, set `upload_files=False` in your
+endpoint config. A proper fix (gating `fs.ls()` on JWT availability) is tracked in
+[kodosumi#39](https://github.com/masumi-network/kodosumi/issues/39).
+</Callout>
+
 ### File Download
 
 ```python
