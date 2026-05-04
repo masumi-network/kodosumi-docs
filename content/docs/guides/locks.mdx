@@ -438,3 +438,15 @@ result = await tracer.lock("timeout-lock", data={...}, timeout=300)  # 5 minutes
 ```
 
 If the lock times out, the execution fails with a timeout error. The default timeout is 3 hours.
+
+<Callout type="warn">
+**Paid HITL agents: align your payment deadline with your lock timeout.**
+
+Kodosumi's default lock timeout (`LOCK_EXPIRES`) is **3 hours**. Masumi's default payment deadline (`submit_result_by_time`) is **60 minutes**. For paid HITL agents these two values are in conflict: Masumi triggers a refund when the 60-minute payment window expires, so when the lock eventually resolves at 3 hours the payment is already in `RefundWithdrawn` state — and `submit_result` returns a 404.
+
+**Fix:** ensure `submit_result_by_time` exceeds your lock timeout. If your agent uses the 3-hour default, set `submit_result_by_time` to at least `14400` seconds (4 hours) in your Masumi payment configuration.
+
+**Sokosumi-initiated jobs cannot resolve HITL locks.** Automated jobs started via Sokosumi have no interactive user to submit the lock form — the lock will always time out. Do not use HITL locks in agents that accept Sokosumi-initiated paid jobs, or implement a programmatic fallback that resolves the lock without human input.
+
+See [kodosumi#56](https://github.com/masumi-network/kodosumi/issues/56) for the full issue report with failure timeline and fix options.
+</Callout>
