@@ -2,6 +2,8 @@
 title: kodosumi panel API
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 The purpose of this document is to demonstrate the interaction with kodosumi panel API. To run the example requests below ensure you have an agentic service `Hymn Creator` up and running on your _localhost_. See [README](../README.md) on installation, setup and deployment of Ray, kodosumi and the _Hymn Creator_ agentic service.
 
 ## Authentication
@@ -299,6 +301,27 @@ During flow execution, errors may occur that raise `kodosumi.error.KodosumiError
 
 When a `kodosumi.error.KodosumiError` is raised, the flow status changes to `"error"` and the error message is made available through the status endpoint's `final` field (as serialized `Text`) as well as the results endpoints.
 
+<Callout type="warn">
+**Known issue — Sumi status endpoint may expose full Python tracebacks** ([kodosumi#55](https://github.com/masumi-network/kodosumi/issues/55))
+
+The panel API (`GET /outputs/status/{fid}`) behaves as described above. However, the **Sumi-facing endpoint** (`GET /sumi/{expose}/{meta}/status/{job_id}`) used by Sokosumi can return a full Python traceback in the `error` field when an exception other than `KodosumiError` propagates unhandled. In environments where Ray module paths include access tokens (e.g. private GitHub pip installs), **this exposes credentials to anyone who can query the status endpoint.**
+
+Until this is patched, protect your agents with three steps:
+
+1. **Wrap all agent code in try/except** and re-raise unexpected exceptions as `KodosumiError` with a user-safe message:
+   ```python
+   from kodosumi.error import KodosumiError
+   try:
+       result = do_something_risky()
+   except KodosumiError:
+       raise  # already safe — pass through
+   except Exception as e:
+       raise KodosumiError("Something went wrong. Please try again.") from e
+   ```
+2. **Never render the raw `error` field to end users** without sanitizing it — treat it as untrusted internal output.
+3. **Rotate any tokens** that may have appeared in error responses from production Sumi endpoints.
+</Callout>
+
 ### Error Status
 
 When a flow execution encounters a `kodosumi.error.KodosumiError`, the status endpoint returns `status == "error"`:
@@ -352,4 +375,3 @@ error_html = resp.text  # HTML rendered error message
 ```
 
 The error message contains the exception details from `kodosumi.error.KodosumiError` and is formatted as plain text (`dtypes.Text`), making it suitable for display in user interfaces.
-
