@@ -5,6 +5,20 @@ icon: Terminal
 
 The Kodosumi CLI (`koco`) provides various commands for managing and running Kodosumi services.
 
+<Callout type="warn" title="Breaking change: --register removed from koco serve and koco start">
+The `--register` option has been removed from `koco serve` (and `koco start`) in recent versions.
+Passing it now causes an immediate crash on startup:
+
+```
+Error: No such option: --register
+```
+
+Services that crash on startup will enter a `systemd` restart loop. If your service files,
+Docker `CMD` entries, or startup scripts include `--register`, **remove it before upgrading**.
+
+See [kodosumi#57](https://github.com/masumi-network/kodosumi/issues/57) for background.
+</Callout>
+
 ## Overview
 
 ```bash
@@ -66,7 +80,7 @@ koco serve [OPTIONS]
 - `--uvicorn-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]` - Uvicorn log level
 - `--exec-dir TEXT` - Execution directory
 - `--reload` - Reload app server on file changes
-- `--register TEXT` - Register endpoints (can be used multiple times)
+- ~~`--register TEXT`~~ — **Removed.** This option no longer exists. Passing it crashes the process. Remove it from any service files or startup scripts. See [kodosumi#57](https://github.com/masumi-network/kodosumi/issues/57).
 
 **Examples:**
 
@@ -76,9 +90,6 @@ koco serve
 
 # Start server with reload and custom address
 koco serve --reload --address 0.0.0.0:8000
-
-# Start server with flow registration
-koco serve --register flow1 --register flow2
 ```
 
 ### start
@@ -92,7 +103,7 @@ koco start [OPTIONS]
 **Options:**
 
 - `--exec-dir TEXT` - Execution directory
-- `--register TEXT` - Register endpoints (can be used multiple times)
+- ~~`--register TEXT`~~ — **Removed.** See warning above.
 
 **Examples:**
 
@@ -163,4 +174,4 @@ All commands support configurable logging levels:
 - `ERROR` - Errors
 - `CRITICAL` - Critical errors
 
-Logs can be output both to screen and to files. 
+Logs can be output both to screen and to files.
