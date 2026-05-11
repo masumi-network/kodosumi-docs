@@ -438,3 +438,16 @@ result = await tracer.lock("timeout-lock", data={...}, timeout=300)  # 5 minutes
 ```
 
 If the lock times out, the execution fails with a timeout error. The default timeout is 3 hours.
+
+<Callout type="warn">
+**Masumi payment compatibility:** If your HITL service accepts Masumi payments, be aware that the payment's `submitResultTime` (default: **60 minutes**) runs independently of the lock timeout (default: **3 hours**). If a lock is still awaiting human input when `submitResultTime` elapses, the payment will be refunded — even if the job eventually completes successfully.
+
+To avoid unexpected refunds:
+- Ensure human-review steps are completed before the payment's `submitResultTime` expires, or
+- Set an explicit `timeout` on `tracer.lock()` that is shorter than your configured `submitResultTime`, so the job fails cleanly before the payment window closes.
+
+```python
+# Example: keep lock timeout under the 60-minute payment window
+result = await tracer.lock("approval-lock", data={...}, timeout=3300)  # 55 minutes
+```
+</Callout>
