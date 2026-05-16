@@ -3,11 +3,23 @@ title: Configuration
 icon: Settings
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 This document describes all available configuration settings for Kodosumi. Settings can be configured through environment variables, a `.env` file, or command-line arguments.
 
 ## Environment Variables
 
 All configuration settings can be set using environment variables with the prefix `KODO_`. For example, to set the execution directory, use `KODO_EXEC_DIR`. These environment variables can be overridden using the `koco` command-line tool.
+
+<Callout type="warn">
+**Container mode: `KODO_MASUMI*` env vars may be invisible at startup**
+
+In container deployments, indexed Masumi environment variables (`KODO_MASUMI1`, `KODO_MASUMI2`, etc.) are not reliably visible to `_parse_masumi_env()` at startup. The parser may silently skip them, leaving your Masumi configuration unconfigured with no error message. This is a [known bug](https://github.com/masumi-network/kodosumi/issues/59).
+
+**Workaround:** Until a fix is released, either:
+- Mount a `.env` file into the container and let Kodosumi load it at startup, or
+- Use the non-indexed `KODO_MASUMI_<KEY>=<value>` form if your configuration supports it
+</Callout>
 
 ## Configuration Settings
 
@@ -132,5 +144,3 @@ All configuration settings can be set using environment variables with the prefi
 
 - `PROXY_TIMEOUT` (default: `30`)
   - Proxy timeout in seconds
-
-
