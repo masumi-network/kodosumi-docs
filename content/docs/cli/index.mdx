@@ -66,7 +66,6 @@ koco serve [OPTIONS]
 - `--uvicorn-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]` - Uvicorn log level
 - `--exec-dir TEXT` - Execution directory
 - `--reload` - Reload app server on file changes
-- `--register TEXT` - Register endpoints (can be used multiple times)
 
 **Examples:**
 
@@ -76,10 +75,11 @@ koco serve
 
 # Start server with reload and custom address
 koco serve --reload --address 0.0.0.0:8000
-
-# Start server with flow registration
-koco serve --register flow1 --register flow2
 ```
+
+<Callout type="warn">
+**Kodosumi 1.2.0 breaking change:** The `--register` option has been removed from `koco serve`. If you were passing `--register` on startup, register your service endpoints via the admin panel instead: navigate to **Admin → Routes** (`/admin/routes`) and click **RECONNECT**, or use `koco deploy` with a config file.
+</Callout>
 
 ### start
 
@@ -92,7 +92,6 @@ koco start [OPTIONS]
 **Options:**
 
 - `--exec-dir TEXT` - Execution directory
-- `--register TEXT` - Register endpoints (can be used multiple times)
 
 **Examples:**
 
@@ -103,6 +102,10 @@ koco start
 # With custom execution directory
 koco start --exec-dir /path/to/flows
 ```
+
+<Callout type="warn">
+**Kodosumi 1.2.0 breaking change:** The `--register` option has been removed from `koco start`. Register service endpoints via the admin panel (**Admin → Routes** at `/admin/routes`) or `koco deploy` instead.
+</Callout>
 
 ### deploy
 
@@ -163,4 +166,4 @@ All commands support configurable logging levels:
 - `ERROR` - Errors
 - `CRITICAL` - Critical errors
 
-Logs can be output both to screen and to files. 
+Logs can be output both to screen and to files.
