@@ -401,7 +401,7 @@ The `Launch` object adresses function `run_batch` in `company_news.query` which 
 
 ### 12. Create ingress deployment
 
-Finish Ray _serve_ setup and apply the Ray `@serve.deployment` and `@serve.ingress` decorators to create an _ingress deployment_. The `@serve.deployment` decorator is used to convert a Python class into a Deployment in Ray Serve. A deployment in Ray Serve is a group of actors that can handle traffic. It is defined as a single class with a number of options, including the number of “replicas” of the deployment, each of which will map to a Ray actor at runtime. Requests to a deployment are load balanced across its replicas.
+Finish Ray _serve_ setup and apply the Ray `@serve.deployment` and `@serve.ingress` decorators to create an _ingress deployment_. The `@serve.deployment` decorator is used to convert a Python class into a Deployment in Ray Serve. A deployment in Ray Serve is a group of actors that can handle traffic. It is defined as a single class with a number of options, including the number of "replicas" of the deployment, each of which will map to a Ray actor at runtime. Requests to a deployment are load balanced across its replicas.
 
 The `@serve.ingress` decorator is used to wrap a deployment class with an application derived from `FastAPI` for HTTP request parsing.  It defines the HTTP handling logic for the application and can route to other deployments or call into them using the `DeploymentHandle` API.
 
@@ -492,14 +492,20 @@ Again we will skip `koco serve` until we have a proper deployment.
 
 ### 16. Deploy with Ray _serve_
 
-Deploy with Ray _serve_ and run `koco start` to register your service with Kodosumi.
+Deploy with Ray _serve_ and start Kodosumi.
 
 ```bash
 serve deploy company_news.query:fast_app
-koco start --register http://localhost:8000/-/routes
+koco start
 ```
 
-Now launch the admin panel at http://localhost:3370 and run a test from http://localhost:3370/inputs/-/localhost/8000/-/. Retrieve the inputs scheme from [/-/localhost/8000/-/](http://localhost:3370/-/localhost/8000/-/), and test the service at [/inputs/-/localhost/8000/-/](http://localhost:3370/inputs/-/localhost/8000/-/).
+<Callout type="warn">
+The `--register` flag was removed in Kodosumi v1.2.0. Agent registration is now handled through the **Expose** system in the Admin Panel — not via CLI flags. Running `koco start --register <url>` on v1.2.0+ will produce an error.
+</Callout>
+
+To register your deployed agent, open the Admin Panel at [http://localhost:3370](http://localhost:3370), navigate to **Expose**, and add an entry pointing to your Ray Serve deployment URL (`http://localhost:8000/-/routes`). Kodosumi will discover and register the agent endpoints automatically.
+
+You can then test the service at [/inputs/-/localhost/8000/-/](http://localhost:3370/inputs/-/localhost/8000/-/).
 
 Revisit the raw event stream with a given _Flow Identifier_ (`fid`) at http://localhost:3370/outputs/stream/{fid}. Overall you will find the following events in the event stream of the _news search agent_:
 
