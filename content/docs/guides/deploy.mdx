@@ -247,3 +247,26 @@ assert resp.status_code == 201
 ```
 
 Watch the timeout because the response of _Ray serve_ might take a while.
+
+<Callout type="warn">
+**Cold-start agents with `min_replicas: 0`**
+
+When you use `num_replicas: auto` (or set `min_replicas: 0` explicitly in `autoscaling_config`), Ray Serve can scale the deployment to zero replicas. On the first-ever boot on a worker node where the container image has **never been pulled**, the following sequence occurs:
+
+1. Ray Serve reports the app as `RUNNING` — the deployment config is accepted.
+2. The container is still pulling from the registry (30–60 s for a typical 2–3 GB image).
+3. Kodosumi's boot process queries the OpenAPI spec immediately after `RUNNING` is reached, and times out before the container is ready.
+
+**Symptoms:**
+
+```
+[your_agent] [Boot 2/2] OpenAPI not available → Timeout
+[your_agent] [Boot 2/2] No endpoints with 'x-kodosumi' marker
+```
+
+As a result, the Expose UI shows no flows, `POST /expose/{name}/registry` returns 404 "Flow not found", and the agent cannot be started via the form endpoint.
+
+**Workaround:** After the first deploy, call `GET /sumi/{agent}/availability` to trigger a warm-up. Wait ~60 seconds for the container to initialise, then run a refresh from the Expose UI. Subsequent boots will succeed because the image is now cached on the worker.
+
+Note: agents with `min_replicas: 1` and agents whose container image is already cached are not affected.
+</Callout>
