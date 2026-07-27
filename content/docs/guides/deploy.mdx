@@ -247,3 +247,28 @@ assert resp.status_code == 201
 ```
 
 Watch the timeout because the response of _Ray serve_ might take a while.
+
+## Masumi Agent Registration
+
+After deploying your agent, you can register it with the Masumi Network via the Kodosumi Admin panel. This makes your agent discoverable on the Masumi Registry and enables it to accept paid jobs through Sokosumi.
+
+<Callout type="warn">
+**Keep your browser open until on-chain confirmation completes.**
+
+The `agentIdentifier` — required for Sokosumi job acceptance — is written to `expose.db` only while your browser tab actively polls the `/expose/{name}/poll` endpoint. If you close the tab before on-chain confirmation arrives, the `agentIdentifier` is never persisted.
+
+Agents in this state have a `registrationId` but no `agentIdentifier` in their expose meta. Any attempt to start a Sokosumi job will fail with:
+
+```
+400: Agent registration is incomplete (registrationId set but agentIdentifier missing).
+Wait for on-chain confirmation or re-register.
+```
+
+The Admin UI may show the agent as `CONFIRMED` (it queries the Masumi Registry live), but the API reads from `expose.db` — which is missing the `agentIdentifier`.
+
+**Recovery:** Re-open the Admin panel, navigate to the affected agent, and open its registration/status page to re-trigger the confirmation poll. If the agent is confirmed on-chain, the `agentIdentifier` will be fetched and persisted.
+</Callout>
+
+<Callout type="info">
+On-chain confirmation typically takes 1–3 minutes on Preprod and Mainnet. Keep the browser tab open and active during this window.
+</Callout>
