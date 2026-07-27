@@ -84,3 +84,48 @@ The corresponding synchronous methods are
 * `tracer.markdown_sync(message: str)`
 * `tracer.html_sync(message: str)`
 * `tracer.text_sync(message: str)`
+
+## Payment Verification After Job Completion (Sokosumi Marketplace)
+
+> **Warning — Known issue ([kodosumi#83](https://github.com/masumi-network/kodosumi/issues/83))**
+
+When Kodosumi runs a flow as a Sokosumi marketplace job, it transitions the flow to `finished` as soon as `submit_result` returns 200 OK. This is a **fire-and-forget handoff** — Kodosumi does not poll for Masumi payment settlement afterward.
+
+**What can go wrong:** The Masumi purchase can remain in `WaitingForManualAction` while Kodosumi already considers the job complete. When this happens, Sokosumi sends a "Job Failure Notification" email for a job that appears finished on the Kodosumi side.
+
+### Diagnosing a stuck payment
+
+Check the purchase status using the `blockchainIdentifier` for the job:
+
+```
+GET /api/v1/purchase?blockchainIdentifier={blockchainIdentifier}
+Header: token: <MASUMI_API_KEY>
+```
+
+If the response shows `status: WaitingForManualAction`, use the error-state-recovery endpoint to unblock it.
+
+### Manual recovery
+
+```
+# Step 1: Fetch current updatedAt (required for the optimistic lock — must be fresh)
+GET /api/v1/purchase?blockchainIdentifier={blockchainIdentifier}
+Header: token: <MASUMI_API_KEY>
+
+# Step 2: Trigger recovery
+POST /api/v1/purchase/error-state-recovery
+Header: token: <MASUMI_API_KEY>
+Body:
+{
+  "blockchainIdentifier": "<job identifier>",
+  "network": "Mainnet",
+  "updatedAt": "<updatedAt value from Step 1>"
+}
+```
+
+On success, the purchase status moves to `WaitingForExternalAction` or `None` and the Masumi workers complete settlement automatically.
+
+**Important:** `updatedAt` is an optimistic lock — always fetch it immediately before calling recovery. Stale values are rejected.
+
+### Is it always a problem?
+
+Not necessarily. The chain may be slow rather than stuck — payment notifications from Sokosumi can arrive before the chain fully settles. Monitor the purchase status 10–30 minutes after a failure notification before triggering manual recovery.
