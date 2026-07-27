@@ -98,6 +98,10 @@ runtime_env:
     OPENAI_API_KEY: <-- your-api-key -->
 ```
 
+<Callout type="warn">
+**Invalid `env_vars` can crash your entire Ray Serve cluster.** If a `runtime_env.env_vars` entry is malformed or contains an unresolved placeholder (like `<-- your-api-key -->`), Ray's ServeController will fail during recovery — bringing down **every** running application on the cluster, not just the misconfigured one. Always replace placeholder values before running `koco deploy`. See [kodosumi#82](https://github.com/masumi-network/kodosumi/issues/82).
+</Callout>
+
 Test and deploy your configuration set with
 
 ```bash
