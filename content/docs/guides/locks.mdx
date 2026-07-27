@@ -349,7 +349,7 @@ GET /lock/abc123-def456-ghi789/content-review-xyz789
   },
   {
     "type": "cancel",
-    "text": "Request Changes"
+    "text": "Cancel Changes"
   }
 ]
 ```
@@ -438,3 +438,15 @@ result = await tracer.lock("timeout-lock", data={...}, timeout=300)  # 5 minutes
 ```
 
 If the lock times out, the execution fails with a timeout error. The default timeout is 3 hours.
+
+## Autoscaling Compatibility
+
+<Callout type="warn">
+**Ray Serve autoscaling can kill HITL runners mid-task.**
+
+While a runner is paused at `await tracer.lock(...)`, its Ray Serve replica receives no active requests. If autoscaling is enabled with `min_replicas=0`, Ray may scale the replica down and terminate the paused execution — losing all in-flight progress before the human has a chance to respond.
+
+**Mitigation:** For services that use locks, ensure `min_replicas` is set to at least `1` in your Ray Serve deployment configuration, and set `downscale_delay_s` to exceed your maximum expected human response time. The default lock timeout is 3 hours, so `downscale_delay_s` should be set to at least `10800` (3 hours) for HITL services.
+
+See [kodosumi issue #62](https://github.com/masumi-network/kodosumi/issues/62) for details.
+</Callout>
