@@ -133,6 +133,19 @@ Input elements are used to collect user data through various input methods.
   - `multiple`: Whether multiple files can be selected (boolean)
   - `directory`: Whether to allow directory uploads (boolean, uses webkitdirectory)
 
+<Callout type="warn" title="InputFiles + Sokosumi marketplace: known incompatibility (Kodosumi ≤ 1.1.1)">
+When a **Sokosumi marketplace** job invokes your agent, `InputFiles` values arrive as **plain URL strings** (Vercel Blob URLs), not the JSON-encoded `{"items": ..., "batchId": ...}` envelope that the Kodosumi panel sends.
+
+In Kodosumi ≤ 1.1.1, `post_form_handler_internal` unconditionally calls `json.loads()` on the upload value and crashes with **HTTP 500 / `JSONDecodeError`**. This causes `start_job` to return 500 to the marketplace — the job never reaches your agent's `enter()`. Sokosumi shows "Job could not be started".
+
+**Impact:** Any Sokosumi-listed agent that declares `F.InputFiles` will fail on every marketplace invocation until this is patched. Track progress at [kodosumi#61](https://github.com/masumi-network/kodosumi/issues/61).
+
+**Additional caveats (Sokosumi-side, applies even after the fix):**
+
+- **Optional fields are absent, not null** — when a user leaves an optional file field empty, the key is not present in `input_data` at all. Guard with `data.get("field_name")` rather than checking for `None`.
+- **`multiple=True` is currently single-file only** — the Sokosumi upload widget accepts only one file and sends a single URL string regardless of the `multiple` setting. Arrays are not yet supported on the marketplace side.
+</Callout>
+
 ## 2. Action Elements
 
 Action elements are used to trigger form submission or navigation.
