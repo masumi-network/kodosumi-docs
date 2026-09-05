@@ -1,0 +1,155 @@
+---
+title: Masumi Registry
+description: Register Kodosumi agents on the Masumi registry — Web3CardanoV1, Web3CardanoV2, and zero-downtime V1→V2 migration.
+icon: Database
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Kodosumi integrates with the Masumi on-chain registry directly from the Expose panel. The registration UI reads the flow's YAML metadata, picks the wallet you select, and handles the full lifecycle — minting, polling, deregistration, and V1→V2 migration.
+
+## Choosing a payment rail
+
+Masumi runs two escrow contract versions side by side:
+
+| Rail | Description |
+|---|---|
+| **Web3CardanoV1** | Original escrow contract. Price set at the top-level `agentPricing` field. |
+| **Web3CardanoV2** | New contract with per-source pricing and 0% Masumi protocol fee. Recommended for new agents. |
+
+Each selling wallet belongs to one payment source, and that payment source determines the version. The wallet dropdown in the Expose panel marks each entry with `[V1]` or `[V2]`. Pick the version per agent by picking the wallet.
+
+## Web3CardanoV2 registration
+
+A V2 registration differs from V1 in three ways:
+
+1. **Per-source pricing** — the price moves out of `agentPricing` into `supportedPaymentSources`, where each advertised escrow contract owns its own price. Kodosumi advertises the single contract of the selected wallet.
+2. **Source index** — every payment request must name the advertised source it charges through `supportedPaymentSourceIndex`. Kodosumi registers one source, so the index is always `0`.
+3. **Buyer purchase** — the buyer must repeat the source index when creating a purchase, because the seller signature covers it. Kodosumi returns it in `start_job` and `status` responses as `supportedPaymentSourceIndex`, next to `paymentSourceType`.
+
+A successful V2 registration writes extra keys into the flow meta YAML:
+
+```yaml
+agentIdentifier: "7e8bdaf2..."
+registrationId: "cm5..."
+paymentSourceType: Web3CardanoV2
+supportedPaymentSourceIndex: 0
+```
+
+Both keys are removed when you deregister. A V1 registration writes neither.
+
+<Callout type="warn">
+There is no in-place upgrade from V1 to V2. The two versions mint under different registry policies, so a V2 registration always produces a new `agentIdentifier`. Use the **Migrate to V2** button described below, and tell your buyers about the new identifier.
+</Callout>
+
+<Callout type="warn">
+If the V2 selling wallet has a collection address configured on the payment node, the node signs that address into the payment terms. A buyer on another node cannot read it, so its purchase fails the signature check. **Leave the collection address of a V2 selling wallet empty.**
+</Callout>
+
+## Migrating a V1 agent to V2
+
+A confirmed V1 flow shows a **Migrate to V2** button next to its status badge. The dialog lists only Web3CardanoV2 selling wallets and carries the flow's `agentPricing` into `supportedPaymentSources`.
+
+The migration runs in two steps because the V1 mint contract has no update action:
+
+1. Kodosumi requests a new mint on the V2 payment source. The flow keeps its V1 `agentIdentifier` and keeps answering jobs while the mint waits for confirmation — no jobs are lost during the transition.
+2. When the mint confirms, the flow switches to the new identifier and rail. The admin panel completes this step while it is open; `start_job` completes it otherwise, so a migration finishes even if the page is closed.
+
+<Callout type="info">
+The pricing comes from the **saved** flow metadata. Save the flow before migrating if you changed `agentPricing` in the editor — Kodosumi refuses the migration otherwise.
+</Callout>
+
+### API base URL
+
+The migrate dialog includes an **API base URL** field. This is the endpoint that will be minted on-chain for buyers — it is permanent once confirmed.
+
+The field **pre-fills** with the URL this Kodosumi instance serves for this flow, derived as:
+
+```
+{KODO_SUMI_ADDRESS}/sumi{flow_url}
+```
+
+**Only change it if you have already deployed this agent at a different address** — for example, if you are migrating a flow to a new host and the DNS has already switched. Changing it to a URL this Kodosumi does not serve means buyers will reach the wrong endpoint after the mint confirms.
+
+<Callout type="warn">
+**The field is required — you cannot submit an empty API base URL.** The dialog shows a helper line to guide you:
+
+| State | Message |
+|---|---|
+| Default | Buyers call this url. It is the one this kodosumi serves for this flow. |
+| Edited | This kodosumi serves only `<served url>`. Set another url only when that agent is already deployed here, or buyers reach nothing. |
+| Empty | The API base URL cannot be empty. Buyers need a url to call. |
+
+If you edited the field by mistake, click **Use the served url** to reset it.
+</Callout>
+
+<Callout type="warn">
+**A wrong URL does not fail loudly.** The Masumi `/availability` endpoint returns HTTP 200 even for an undeployed path — a status-check health monitor will report the agent as healthy. Only real job calls (`/start_job`, `/status`) will return 404. The mint is permanent, so verify the URL before confirming.
+</Callout>
+
+### Migration YAML state
+
+While a migration waits, the flow meta carries the pending mint:
+
+```yaml
+agentIdentifier: "7e8bdaf2..." # still V1, still serving
+registrationId: "cm5..."
+pendingMigration:
+  registrationId: "cm6..."
+  paymentSourceType: Web3CardanoV2
+  supportedPaymentSourceIndex: 0
+  deregisterPrevious: false
+```
+
+After the swap, the old agent is recorded:
+
+```yaml
+agentIdentifier: "a1c99e04..." # the new V2 agent
+registrationId: "cm6..."
+paymentSourceType: Web3CardanoV2
+supportedPaymentSourceIndex: 0
+previousRegistration:
+  agentIdentifier: "7e8bdaf2..."
+  registrationId: "cm5..."
+  paymentSourceType: Web3CardanoV1
+  deregisterRequested: false # true asks Kodosumi to burn it
+```
+
+The V1 agent stays on chain and keeps its listing. Use the **Deregister V1** button in the same row, or tick _Deregister the V1 agent once the new one is confirmed_ in the migrate dialog to burn it automatically. A failed automatic burn never fails the migration — the old entry is recorded so you can retry by hand.
+
+### When a mint does not confirm
+
+A mint that ends in `RegistrationFailed` clears `pendingMigration` and writes the reason to `migrationError`. The **Migrate to V2** button reappears. For a mint that never reaches any terminal state, use **Cancel migration** — this stops Kodosumi from waiting but does not recall the mint from chain.
+
+```yaml
+agentIdentifier: "7e8bdaf2..." # unchanged, still serving
+registrationId: "cm5..."
+migrationError: "The Web3CardanoV2 registration ended in RegistrationFailed."
+```
+
+<Callout type="warn">
+While both V1 and V2 entries are listed, every job runs on the V2 rail — a flow serves one `agentIdentifier` at a time. A buyer who found the V1 entry still receives V2 payment terms from `start_job`. Deregister the V1 entry once your buyers have moved.
+</Callout>
+
+## V2 pricing format
+
+The registry receives this shape instead of `agentPricing`:
+
+```json
+{
+  "supportedPaymentSources": [
+    {
+      "chain": "Cardano",
+      "network": "Preprod",
+      "paymentSourceType": "Web3CardanoV2",
+      "address": "addr_test1...",
+      "pricing": {
+        "pricingType": "Fixed",
+        "fixed": [{ "asset": "", "amount": "1000000" }]
+      }
+    }
+  ]
+}
+```
+
+The Expose YAML keeps the `agentPricing` format for both versions. Kodosumi converts it at registration time.
