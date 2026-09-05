@@ -59,6 +59,34 @@ The migration runs in two steps because the V1 mint contract has no update actio
 The pricing comes from the **saved** flow metadata. Save the flow before migrating if you changed `agentPricing` in the editor — Kodosumi refuses the migration otherwise.
 </Callout>
 
+### API base URL
+
+The migrate dialog includes an **API base URL** field. This is the endpoint that will be minted on-chain for buyers — it is permanent once confirmed.
+
+The field **pre-fills** with the URL this Kodosumi instance serves for this flow, derived as:
+
+```
+{KODO_SUMI_ADDRESS}/sumi{flow_url}
+```
+
+**Only change it if you have already deployed this agent at a different address** — for example, if you are migrating a flow to a new host and the DNS has already switched. Changing it to a URL this Kodosumi does not serve means buyers will reach the wrong endpoint after the mint confirms.
+
+<Callout type="warn">
+**The field is required — you cannot submit an empty API base URL.** The dialog shows a helper line to guide you:
+
+| State | Message |
+|---|---|
+| Default | Buyers call this url. It is the one this kodosumi serves for this flow. |
+| Edited | This kodosumi serves only `<served url>`. Set another url only when that agent is already deployed here, or buyers reach nothing. |
+| Empty | The API base URL cannot be empty. Buyers need a url to call. |
+
+If you edited the field by mistake, click **Use the served url** to reset it.
+</Callout>
+
+<Callout type="warn">
+**A wrong URL does not fail loudly.** The Masumi `/availability` endpoint returns HTTP 200 even for an undeployed path — a status-check health monitor will report the agent as healthy. Only real job calls (`/start_job`, `/status`) will return 404. The mint is permanent, so verify the URL before confirming.
+</Callout>
+
 ### Migration YAML state
 
 While a migration waits, the flow meta carries the pending mint:
